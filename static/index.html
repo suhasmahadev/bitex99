@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BiteX99 Control Surface</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #E8341C;
+      --bg-dark: #111111;
+      --bg-card: #1E1E1E;
+      --bg-input: #2A2A2A;
+      --border: #333333;
+      --text-primary: #FFFFFF;
+      --text-secondary: #AAAAAA;
+      --text-muted: #666666;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --error: #EF4444;
+      --info: #3B82F6;
+      --shadow: 0 20px 80px rgba(0, 0, 0, .35);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    .hidden { display: none !important; }
+    .screen { min-height: 100vh; }
+    .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; }
+    .logo-mark {
+      width: 34px; height: 34px; display: grid; place-items: center;
+      border-radius: 8px; background: var(--primary); color: #fff;
+    }
+    .login-wrap { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+    .login-card { width: min(420px, 100%); background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: var(--shadow); }
+    .tagline { color: var(--text-secondary); margin: 8px 0 22px; }
+    .role-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+    .role-card { min-height: 92px; border: 1px solid var(--border); border-radius: 10px; background: #181818; color: var(--text-secondary); display: grid; gap: 6px; place-items: center; padding: 10px 6px; }
+    .role-card.active { border-color: var(--primary); color: #fff; }
+    .role-icon { font-size: 24px; }
+    .input, .select, .textarea {
+      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text-primary); padding: 12px 14px; outline: 0;
+    }
+    .input:focus, .textarea:focus, .select:focus, .otp-box:focus { border-color: var(--primary); }
+    .phone-row { display: grid; grid-template-columns: 82px 1fr; gap: 10px; }
+    .prefix { display: grid; place-items: center; background: var(--bg-input); border: 1px solid var(--border); border-radius: 10px; color: #fff; }
+    .btn { border: 0; border-radius: 10px; padding: 12px 14px; background: var(--primary); color: #fff; font-weight: 700; }
+    .btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text-primary); }
+    .btn.ghost { background: transparent; color: var(--primary); padding: 6px; }
+    .btn.full { width: 100%; margin-top: 14px; }
+    .btn:disabled { background: #444; color: var(--text-muted); cursor: not-allowed; }
+    .error-text { min-height: 20px; color: var(--error); font-size: 13px; margin-top: 8px; }
+    .muted { color: var(--text-muted); }
+    .secondary-text { color: var(--text-secondary); }
+    .otp-row { display: flex; justify-content: space-between; gap: 8px; margin: 18px 0; }
+    .otp-box { width: 40px; height: 48px; text-align: center; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-input); color: #fff; font-size: 20px; font-weight: 800; }
+    .app-shell { min-height: 100vh; padding-bottom: 76px; }
+    .topbar { height: 56px; position: sticky; top: 0; z-index: 10; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 0 18px; background: rgba(17,17,17,.96); border-bottom: 1px solid var(--border); }
+    .top-actions { justify-self: end; display: flex; align-items: center; gap: 12px; }
+    .city-pill, .status-pill, .badge { border: 1px solid var(--border); background: var(--bg-card); color: #fff; border-radius: 999px; padding: 7px 10px; font-size: 13px; }
+    .badge.red { background: var(--primary); border-color: var(--primary); }
+    .badge.green { background: rgba(34,197,94,.15); color: var(--success); border-color: rgba(34,197,94,.3); }
+    .badge.amber { background: rgba(245,158,11,.15); color: var(--warning); border-color: rgba(245,158,11,.3); }
+    .badge.blue { background: rgba(59,130,246,.15); color: var(--info); border-color: rgba(59,130,246,.3); }
+    .badge.gray { color: var(--text-secondary); }
+    .avatar { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 999px; background: var(--primary); color: #fff; font-weight: 800; }
+    .content { width: min(1120px, 100%); margin: 0 auto; padding: 18px; }
+    .bottom-tabs { position: fixed; left: 0; right: 0; bottom: 0; height: 66px; z-index: 20; display: flex; justify-content: center; gap: 6px; padding: 8px; background: rgba(17,17,17,.98); border-top: 1px solid var(--border); }
+    .tab-btn { min-width: 78px; border: 0; color: var(--text-secondary); background: transparent; border-radius: 10px; display: grid; gap: 3px; place-items: center; }
+    .tab-btn.active { background: var(--bg-card); color: #fff; }
+    .search-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-bottom: 12px; }
+    .chips { position: sticky; top: 56px; z-index: 5; display: flex; gap: 8px; overflow-x: auto; padding: 10px 0; background: var(--bg-dark); }
+    .chip { white-space: nowrap; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); border-radius: 999px; padding: 8px 12px; }
+    .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .card-pad { padding: 14px; }
+    .restaurant-img { height: 140px; background: linear-gradient(135deg, #351813, #2a2a2a); position: relative; overflow: hidden; }
+    .restaurant-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card-title { display: flex; justify-content: space-between; gap: 10px; align-items: center; margin-bottom: 5px; font-weight: 800; }
+    .closed { position: absolute; inset: 0; background: rgba(0,0,0,.65); display: grid; place-items: center; color: var(--text-secondary); font-weight: 800; }
+    .save { position: absolute; right: 10px; top: 10px; border: 0; background: rgba(0,0,0,.5); color: #fff; border-radius: 999px; width: 34px; height: 34px; }
+    .skeleton { min-height: 116px; border-radius: 8px; background: linear-gradient(90deg, #202020 25%, #2b2b2b 50%, #202020 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+    @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+    .detail-cover { height: 200px; margin: -18px -18px 16px; background: #222; position: relative; }
+    .detail-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .back-btn { position: absolute; left: 14px; top: 14px; border: 0; background: rgba(0,0,0,.65); color: #fff; border-radius: 999px; width: 38px; height: 38px; }
+    .menu-card { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 14px; border-bottom: 1px solid var(--border); }
+    .qty { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--primary); border-radius: 8px; overflow: hidden; }
+    .qty button { background: transparent; color: var(--primary); border: 0; padding: 8px 10px; font-weight: 800; }
+    .empty { min-height: 50vh; display: grid; place-items: center; text-align: center; color: var(--text-secondary); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; }
+    .divider { border-top: 1px solid var(--border); margin: 8px 0; }
+    .sticky-cta { position: fixed; left: 14px; right: 14px; bottom: 78px; z-index: 21; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); }
+    .modal { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.75); display: grid; place-items: center; padding: 18px; }
+    .modal-card { width: min(420px, 100%); background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+    .sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 55; background: var(--bg-card); border-top: 1px solid var(--border); border-radius: 16px 16px 0 0; padding: 18px; box-shadow: var(--shadow); animation: slideUp .2s ease-out; }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .success-overlay { position: fixed; inset: 0; z-index: 60; background: var(--bg-dark); display: grid; place-items: center; padding: 20px; text-align: center; }
+    .check { width: 86px; height: 86px; margin: 0 auto 14px; border-radius: 999px; display: grid; place-items: center; background: var(--success); font-size: 42px; animation: pop .25s ease-out; }
+    @keyframes pop { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .steps { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 18px 0; }
+    .step { color: var(--text-muted); }
+    .step.active { color: var(--success); }
+    .columns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .split { display: grid; grid-template-columns: 30% 1fr; gap: 14px; }
+    .doc-list { display: grid; gap: 10px; }
+    .progress { height: 10px; border-radius: 999px; background: #2b2b2b; overflow: hidden; }
+    .progress > span { display: block; height: 100%; background: var(--primary); }
+    .pulse { width: 12px; height: 12px; border-radius: 999px; background: var(--success); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,.4); } 50% { box-shadow: 0 0 0 14px rgba(34,197,94,0); } }
+    .toast-wrap { position: fixed; top: 14px; right: 14px; z-index: 100; display: grid; gap: 10px; }
+    .toast { min-width: 260px; background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--success); padding: 12px; border-radius: 8px; box-shadow: var(--shadow); animation: toastIn .2s ease-out; }
+    @keyframes toastIn { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @media (max-width: 760px) {
+      .topbar { grid-template-columns: auto 1fr auto; padding: 0 12px; }
+      .grid, .columns, .split { grid-template-columns: 1fr; }
+      .role-grid { gap: 8px; }
+      .role-card { font-size: 12px; }
+      .search-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="toast-root" class="toast-wrap"></div>
+  <main id="app"></main>
+
+  <script>
+    const TOKEN_KEY = 'bitex_token';
+    const ROLE_KEY = 'bitex_role';
+    const USER_KEY = 'bitex_user';
+    const REFRESH_KEY = 'bitex_refresh';
+    const app = document.getElementById('app');
+    const state = {
+      role: 'CUSTOMER',
+      phone: '',
+      otpTimer: null,
+      otpRemaining: 0,
+      city: 'Mumbai',
+      activeTab: 'home',
+      partnerTab: 'active',
+      restaurantTab: 'orders',
+      restaurants: [],
+      selectedRestaurant: null,
+      menu: [],
+      cart: null,
+      orders: [],
+      addresses: [],
+      selectedAddressId: null,
+      couponCode: '',
+      paymentMethod: 'COD',
+      conflict: null,
+      pendingAdd: null,
+      incoming: null,
+      assignment: null,
+      restaurantLive: null
+    };
+
+    function getToken() { return localStorage.getItem(TOKEN_KEY); }
+    function user() {
+      try { return JSON.parse(localStorage.getItem(USER_KEY) || '{}'); }
+      catch { return {}; }
+    }
+    function role() { return localStorage.getItem(ROLE_KEY) || 'CUSTOMER'; }
+    function headers(extra = {}) {
+      const token = getToken();
+      return { 'Content-Type': 'application/json', ...(token ? {'Authorization': `Bearer ${token}`} : {}), ...extra };
+    }
+    async function apiFetch(path, options = {}) {
+      const res = await fetch(`/api/v1${path}`, { ...options, headers: headers(options.headers || {}) });
+      if (res.status === 401) {
+        localStorage.clear();
+        showToast('Session expired. Please login again.', 'error');
+        showLoginScreen();
+        return null;
+      }
+      return res;
+    }
+    async function jsonOrError(res) {
+      if (!res) return null;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw data;
+      return data;
+    }
+    function showToast(message, type='success') {
+      const colors = { success: '#22C55E', error: '#EF4444', info: '#3B82F6' };
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.style.borderLeftColor = colors[type] || colors.success;
+      el.textContent = message;
+      document.getElementById('toast-root').appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+    function initials() {
+      const u = user();
+      return (u.name || u.phone || 'B').slice(0,1).toUpperCase();
+    }
+    function money(v) { return `Rs ${Number(v || 0).toFixed(0)}`; }
+    function roleToApiFlags() {
+      return {
+        register_as_partner: state.role === 'DELIVERY_PARTNER',
+        register_as_restaurant: state.role === 'RESTAURANT_PARTNER'
+      };
+    }
+
+    function logo() {
+      return `<span class="logo"><span class="logo-mark">B</span><span>BiteX99</span></span>`;
+    }
+
+    function showLoginScreen(message = '') {
+      clearInterval(state.otpTimer);
+      app.innerHTML = `
+        <section class="login-wrap screen">
+          <div class="login-card">
+            ${logo()}
+            <p class="tagline">One city. Every craving. Delivered.</p>
+            <div id="phone-pane">
+              <div class="role-grid">
+                ${roleCard('CUSTOMER','👤','Customer')}
+                ${roleCard('RESTAURANT_PARTNER','🏪','Restaurant Partner')}
+                ${roleCard('DELIVERY_PARTNER','🛵','Delivery Agent')}
+              </div>
+              <div class="phone-row">
+                <div class="prefix">🇮🇳 +91</div>
+                <input id="phone-input" class="input" inputmode="numeric" maxlength="10" placeholder="10 digit input" />
+              </div>
+              <button id="send-otp" class="btn full">Send OTP</button>
+              <div id="login-error" class="error-text">${message}</div>
+            </div>
+            <div id="otp-pane" class="hidden">
+              <p class="secondary-text" id="otp-copy"></p>
+              <div class="otp-row">${Array.from({length: 6}, (_, i) => `<input class="otp-box" inputmode="numeric" maxlength="1" data-i="${i}">`).join('')}</div>
+              <input id="name-input" class="input" placeholder="Your name (optional)" />
+              <div class="row"><span id="resend-copy" class="secondary-text"></span><button id="resend-btn" class="btn ghost hidden">Resend OTP</button></div>
+              <button id="verify-otp" class="btn full">Verify & Continue</button>
+              <div id="otp-error" class="error-text"></div>
+            </div>
+          </div>
+        </section>`;
+      bindLogin();
+    }
+
+    function roleCard(value, icon, label) {
+      return `<button class="role-card ${state.role === value ? 'active' : ''}" data-role="${value}">
+        <span class="role-icon">${icon}</span><strong>${label}</strong>
+      </button>`;
+    }
+
+    function bindLogin() {
+      document.querySelectorAll('.role-card').forEach(btn => btn.onclick = () => {
+        state.role = btn.dataset.role;
+        showLoginScreen();
+      });
+      const phoneInput = document.getElementById('phone-input');
+      phoneInput.oninput = () => phoneInput.value = phoneInput.value.replace(/\D/g, '').slice(0, 10);
+      document.getElementById('send-otp').onclick = sendOtp;
+      document.getElementById('verify-otp').onclick = verifyOtp;
+      document.getElementById('resend-btn').onclick = sendOtp;
+      document.querySelectorAll('.otp-box').forEach((box, idx, boxes) => {
+        box.oninput = () => {
+          box.value = box.value.replace(/\D/g, '').slice(0,1);
+          if (box.value && boxes[idx + 1]) boxes[idx + 1].focus();
+          if ([...boxes].every(b => b.value)) verifyOtp();
+        };
+        box.onkeydown = e => {
+          if (e.key === 'Backspace' && !box.value && boxes[idx - 1]) boxes[idx - 1].focus();
+        };
+      });
+    }
+
+    async function sendOtp() {
+      const raw = document.getElementById('phone-input')?.value || state.phone.replace('+91','');
+      if (raw.length !== 10) return setError('login-error', 'Enter a valid 10 digit phone number');
+      state.phone = `+91${raw}`;
+      setLoading('send-otp', true);
+      try {
+        const res = await apiFetch('/auth/send-otp', { method: 'POST', body: JSON.stringify({ phone: state.phone }) });
+        if (res && res.status === 429) {
+          const data = await res.json().catch(() => ({}));
+          throw { error_code: 'OTP_COOLDOWN', seconds_remaining: data.seconds_remaining || 60 };
+        }
+        await jsonOrError(res);
+        document.getElementById('phone-pane').classList.add('hidden');
+        document.getElementById('otp-pane').classList.remove('hidden');
+        document.getElementById('otp-copy').textContent = `Enter OTP sent to +91 XXXXXX${state.phone.slice(-4)}`;
+        startOtpCountdown();
+        document.querySelector('.otp-box').focus();
+      } catch (err) {
+        const wait = err.seconds_remaining || err.details?.seconds_remaining || 60;
+        setError('login-error', err.error_code === 'OTP_COOLDOWN' ? `Wait ${wait}s` : (err.message || 'Unable to send OTP'));
+      } finally {
+        setLoading('send-otp', false);
+      }
+    }
+
+    function startOtpCountdown() {
+      state.otpRemaining = 60;
+      clearInterval(state.otpTimer);
+      tickOtp();
+      state.otpTimer = setInterval(tickOtp, 1000);
+    }
+    function tickOtp() {
+      const copy = document.getElementById('resend-copy');
+      const btn = document.getElementById('resend-btn');
+      if (!copy || !btn) return;
+      if (state.otpRemaining > 0) {
+        copy.textContent = `Resend in 0:${String(state.otpRemaining).padStart(2,'0')}`;
+        btn.classList.add('hidden');
+        state.otpRemaining -= 1;
+      } else {
+        copy.textContent = '';
+        btn.classList.remove('hidden');
+      }
+    }
+
+    async function verifyOtp() {
+      const otp = [...document.querySelectorAll('.otp-box')].map(b => b.value).join('');
+      if (otp.length !== 6) return setError('otp-error', 'Enter all 6 digits');
+      setLoading('verify-otp', true);
+      try {
+        const payload = { phone: state.phone, otp, ...roleToApiFlags() };
+        const data = await jsonOrError(await apiFetch('/auth/verify-otp', { method: 'POST', body: JSON.stringify(payload) }));
+        localStorage.setItem(TOKEN_KEY, data.access_token);
+        if (data.refresh_token) localStorage.setItem(REFRESH_KEY, data.refresh_token);
+        localStorage.setItem(ROLE_KEY, data.user?.role || state.role);
+        localStorage.setItem(USER_KEY, JSON.stringify(data.user || {}));
+        const name = document.getElementById('name-input').value.trim();
+        if (data.is_new_user && name) {
+          const patch = await apiFetch('/users/me', { method: 'PATCH', body: JSON.stringify({ name }) });
+          const updated = await patch.json().catch(() => null);
+          if (updated) localStorage.setItem(USER_KEY, JSON.stringify(updated));
+        }
+        routeAfterLogin();
+      } catch (err) {
+        const code = err.error_code || err.detail?.error_code;
+        if (code === 'TOO_MANY_OTP_ATTEMPTS') return showLoginScreen('Too many attempts. Request a new OTP.');
+        if (code === 'OTP_EXPIRED') return showLoginScreen('OTP expired');
+        if (code === 'INVALID_OTP') return setError('otp-error', `${err.attempts_remaining || err.detail?.attempts_remaining || 0} attempts left`);
+        setError('otp-error', err.message || 'Invalid OTP');
+      } finally {
+        setLoading('verify-otp', false);
+      }
+    }
+
+    function routeAfterLogin() {
+      const u = user();
+      const r = role();
+      if (r === 'DELIVERY_PARTNER' && u.partner_status !== 'KYC_APPROVED') return showPartnerKyc();
+      if (r === 'DELIVERY_PARTNER') return showPartnerDashboard();
+      if (r === 'RESTAURANT_PARTNER' && u.restaurant_status !== 'DOCS_APPROVED') return showRestaurantDocs();
+      if (r === 'RESTAURANT_PARTNER') return showRestaurantDashboard();
+      showCustomerDashboard();
+    }
+
+    function setError(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+    function setLoading(id, isLoading) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      btn.disabled = isLoading;
+      btn.dataset.oldText ||= btn.textContent;
+      btn.textContent = isLoading ? 'Please wait...' : btn.dataset.oldText;
+    }
+    function logout() {
+      apiFetch('/auth/logout', { method: 'POST', body: '{}' }).catch(() => {});
+      localStorage.clear();
+      showLoginScreen();
+    }
+
+    function customerShell(inner) {
+      app.innerHTML = `
+        <section class="app-shell">
+          <nav class="topbar">
+            ${logo()}
+            <button class="city-pill" id="city-change">📍 ${state.city} ▾</button>
+            <div class="top-actions"><button class="city-pill" id="cart-shortcut">🛒 <span id="cart-badge">0</span></button><button class="avatar" id="profile-menu">${initials()}</button></div>
+          </nav>
+          <div class="content">${inner}</div>
+          <nav class="bottom-tabs">
+            ${tab('home','🏠','Home', state.activeTab)}
+            ${tab('cart','🛒','Cart', state.activeTab)}
+            ${tab('orders','📦','Orders', state.activeTab)}
+            ${tab('profile','👤','Profile', state.activeTab)}
+          </nav>
+        </section>`;
+      document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { state.activeTab = b.dataset.tab; showCustomerDashboard(); });
+      document.getElementById('cart-shortcut').onclick = () => { state.activeTab = 'cart'; showCustomerDashboard(); };
+      document.getElementById('city-change').onclick = () => {
+        const city = prompt('City', state.city);
+        if (city) { state.city = city; state.selectedRestaurant = null; state.activeTab = 'home'; loadRestaurants(); }
+      };
+      refreshCartBadge();
+    }
+    function tab(key, icon, label, active) {
+      return `<button class="tab-btn ${active === key ? 'active' : ''}" data-tab="${key}"><span>${icon}</span><span>${label}</span></button>`;
+    }
+    function showCustomerDashboard() {
+      if (state.selectedRestaurant) return renderRestaurantDetail();
+      if (state.activeTab === 'cart') return renderCart();
+      if (state.activeTab === 'orders') return renderOrders();
+      if (state.activeTab === 'profile') return renderProfile();
+      renderHome();
+    }
+
+    function renderHome() {
+      customerShell(`
+        <div class="search-row">
+          <input id="search" class="input" placeholder="🔍 Search restaurants or dishes..." />
+          <select id="sort" class="select"><option value="avg_rating">Top Rated</option><option value="avg_delivery_time_min">Fastest</option><option value="cost_for_two">Cost</option></select>
+        </div>
+        <div class="chips" id="chips">
+          ${['All','🍔 Burgers','🍕 Pizza','🍜 Biryani','🥗 Healthy','🍜 Chinese','🌮 North Indian','Veg Only'].map((c,i)=>`<button class="chip ${i===0?'active':''}" data-chip="${c}">${c}</button>`).join('')}
+        </div>
+        <div id="restaurant-grid" class="grid">${skeletons(6)}</div>`);
+      document.getElementById('search').oninput = loadRestaurants;
+      document.getElementById('sort').onchange = loadRestaurants;
+      document.querySelectorAll('.chip').forEach(chip => chip.onclick = () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        loadRestaurants();
+      });
+      loadRestaurants();
+    }
+
+    async function loadRestaurants() {
+      const grid = document.getElementById('restaurant-grid');
+      if (!grid) return;
+      grid.innerHTML = skeletons(6);
+      const q = document.getElementById('search')?.value || '';
+      const sort = document.getElementById('sort')?.value || 'avg_rating';
+      const chip = document.querySelector('.chip.active')?.dataset.chip || 'All';
+      const veg = chip === 'Veg Only';
+      const cuisine = ['All','Veg Only'].includes(chip) ? '' : chip.replace(/[^\p{L}\s]/gu, '').trim();
+      const params = new URLSearchParams({ city: state.city, q, sort_by: sort, page: '1', page_size: '20' });
+      if (veg) params.set('is_veg_only', 'true');
+      if (cuisine) params.set('cuisine', cuisine);
+      try {
+        const data = await jsonOrError(await apiFetch(`/restaurants?${params}`));
+        state.restaurants = data.data || [];
+        if (!state.restaurants.length) {
+          grid.innerHTML = `<div class="empty card card-pad" style="grid-column:1/-1"><div><h2>🔍 No restaurants in ${state.city}</h2><button class="btn" onclick="loadRestaurants()">Retry</button></div></div>`;
+          return;
+        }
+        grid.innerHTML = state.restaurants.map(restaurantCard).join('');
+        document.querySelectorAll('[data-restaurant]').forEach(card => card.onclick = () => openRestaurant(card.dataset.restaurant));
+      } catch (err) {
+        grid.innerHTML = `<div class="empty card card-pad" style="grid-column:1/-1"><div><h2>Could not load restaurants</h2><button class="btn" onclick="loadRestaurants()">Retry</button></div></div>`;
+      }
+    }
+
+    function restaurantCard(r) {
+      const img = r.image_url ? `<img src="${r.image_url}" alt="">` : '';
+      return `<article class="card" data-restaurant="${r.id}">
+        <div class="restaurant-img">${img}<span class="badge red" style="position:absolute;left:10px;top:10px">40% OFF</span><button class="save">♡</button>${r.is_open ? '' : '<div class="closed">CLOSED</div>'}</div>
+        <div class="card-pad">
+          <div class="card-title"><span>${r.name}</span><span class="badge green">★ ${Number(r.rating || 0).toFixed(1)}</span></div>
+          <div class="secondary-text">${r.avg_delivery_time || 30}-${(r.avg_delivery_time || 30)+10} min • ${money(r.min_order_amount)} for two</div>
+          <div class="muted">${(r.cuisine_types || []).join(', ')}</div>
+          <div class="secondary-text" style="margin-top:8px">🛵 ${r.has_offers ? 'Free delivery' : 'Fast delivery'}  📍 2.3 km</div>
+        </div>
+      </article>`;
+    }
+    function skeletons(n) { return Array.from({length:n}, () => `<div class="skeleton"></div>`).join(''); }
+
+    async function openRestaurant(id) {
+      const data = await jsonOrError(await apiFetch(`/restaurants/${id}`));
+      state.selectedRestaurant = data;
+      await loadMenu();
+      renderRestaurantDetail();
+    }
+    async function loadMenu() {
+      if (!state.selectedRestaurant) return;
+      const data = await jsonOrError(await apiFetch(`/restaurants/${state.selectedRestaurant.id}/menu?is_available=true`));
+      state.menu = data || [];
+      await loadCart();
+    }
+    function renderRestaurantDetail() {
+      const r = state.selectedRestaurant;
+      customerShell(`
+        <div class="detail-cover"><button class="back-btn" id="back-home">←</button>${r.cover_image_url || r.image_url ? `<img src="${r.cover_image_url || r.image_url}">` : ''}</div>
+        <div class="row"><div><h1>${r.name}</h1><p class="secondary-text">⏱ ${r.avg_delivery_time || 30} min • 🛵 ${money(r.delivery_fee || 30)} delivery • Min ${money(r.min_order_amount)}</p></div><span class="badge green">★ ${Number(r.rating || 0).toFixed(1)}</span></div>
+        <div class="row"><strong>Veg-only</strong><label><input id="veg-toggle" type="checkbox"> 🟢</label></div>
+        <div class="chips">${state.menu.map((c,i)=>`<button class="chip ${i===0?'active':''}">${c.category}</button>`).join('')}</div>
+        <section class="card">${state.menu.map(c => `<div class="card-pad"><h3>${c.category}</h3></div>${(c.items || []).map(menuItemCard).join('')}`).join('') || '<div class="empty">No menu items available</div>'}</section>`);
+      document.getElementById('back-home').onclick = () => { state.selectedRestaurant = null; renderHome(); };
+      document.querySelectorAll('[data-add]').forEach(btn => btn.onclick = e => addOrUpdateItem(e.currentTarget.dataset.add, 1));
+      document.querySelectorAll('[data-inc]').forEach(btn => btn.onclick = e => addOrUpdateItem(e.currentTarget.dataset.inc, 1));
+      document.querySelectorAll('[data-dec]').forEach(btn => btn.onclick = e => addOrUpdateItem(e.currentTarget.dataset.dec, -1));
+      if (state.conflict) renderConflict();
+    }
+    function cartQty(itemId) {
+      return state.cart?.data?.items?.find(i => String(i.menu_item_id) === String(itemId))?.quantity || 0;
+    }
+    function menuItemCard(i) {
+      const qty = cartQty(i.id);
+      return `<div class="menu-card">
+        <div><strong>🟢 ${i.name}</strong> ${(i.tags || []).includes('Bestseller') ? '<span class="badge amber">Bestseller</span>' : ''}<p class="secondary-text">${i.description || 'Great taste, loved by all'}</p><div>${i.discounted_price ? `<span class="muted"><s>${money(i.price)}</s></span> ` : ''}<strong>${money(i.discounted_price || i.price)}</strong></div></div>
+        <div>${qty ? `<span class="qty"><button data-dec="${i.id}">−</button><strong>${qty}</strong><button data-inc="${i.id}">+</button></span>` : `<button class="btn secondary" data-add="${i.id}">ADD +</button>`}</div>
+      </div>`;
+    }
+    async function addOrUpdateItem(itemId, delta) {
+      const qty = cartQty(itemId);
+      try {
+        if (!qty && delta > 0) {
+          state.pendingAdd = itemId;
+          const res = await apiFetch('/cart/add', { method: 'POST', body: JSON.stringify({ menu_item_id: itemId, quantity: 1 }) });
+          if (res.status === 409) {
+            const err = await res.json();
+            if (err.error_code === 'CART_CONFLICT') {
+              state.conflict = err.details || err.data;
+              renderConflict();
+              return;
+            }
+            throw err;
+          }
+        } else {
+          await jsonOrError(await apiFetch('/cart/update-quantity', { method: 'POST', body: JSON.stringify({ menu_item_id: itemId, quantity: Math.max(0, qty + delta) }) }));
+        }
+        await loadCart();
+        renderRestaurantDetail();
+      } catch (err) {
+        showToast(err.message || 'Cart update failed', 'error');
+      }
+    }
+    function renderConflict() {
+      const c = state.conflict;
+      document.body.insertAdjacentHTML('beforeend', `<div class="modal" id="conflict-modal"><div class="modal-card">
+        <h2>🛒 Items already in cart</h2>
+        <p class="secondary-text">Your cart has items from "${c.existing_restaurant?.name}". Clear cart to add from "${c.new_restaurant?.name}"?</p>
+        <div class="row"><button class="btn secondary" id="conflict-cancel">Cancel</button><button class="btn" id="conflict-clear">Clear & Add</button></div>
+      </div></div>`);
+      document.getElementById('conflict-cancel').onclick = () => { state.conflict = null; document.getElementById('conflict-modal').remove(); };
+      document.getElementById('conflict-clear').onclick = async () => {
+        await jsonOrError(await apiFetch('/cart/clear', { method: 'POST', body: '{}' }));
+        const itemId = state.pendingAdd;
+        state.conflict = null;
+        document.getElementById('conflict-modal').remove();
+        await addOrUpdateItem(itemId, 1);
+      };
+    }
+
+    async function loadCart() {
+      try { state.cart = await jsonOrError(await apiFetch('/cart')); }
+      catch { state.cart = null; }
+      refreshCartBadge();
+    }
+    function refreshCartBadge() {
+      const badge = document.getElementById('cart-badge');
+      if (badge) badge.textContent = state.cart?.data?.item_count || 0;
+    }
+    async function renderCart() {
+      customerShell(`<div id="cart-content">${skeletons(2)}</div>`);
+      await loadCart();
+      const data = state.cart?.data;
+      const box = document.getElementById('cart-content');
+      if (!data || !data.items.length) {
+        box.innerHTML = `<div class="empty"><div><h1>🛒</h1><h2>Your cart is empty</h2><p>Add items from a restaurant</p><button class="btn" id="browse">Browse Restaurants</button></div></div>`;
+        document.getElementById('browse').onclick = () => { state.activeTab = 'home'; showCustomerDashboard(); };
+        return;
+      }
+      box.innerHTML = `
+        <h2>${data.restaurant.name}</h2>
+        <section class="card card-pad">${data.items.map(i => `<div class="row"><span>🟢 ${i.name}</span><span class="qty"><button onclick="cartSet('${i.menu_item_id}',${i.quantity-1})">−</button><strong>${i.quantity}</strong><button onclick="cartSet('${i.menu_item_id}',${i.quantity+1})">+</button></span><strong>${money(i.item_total)}</strong></div>`).join('')}</section>
+        <section class="card card-pad"><h3>Bill Details</h3><div class="row"><span>Item Total</span><span>${money(data.items_total)}</span></div><div class="row"><span>Delivery Fee</span><span>${money(data.delivery_fee)}</span></div><div class="row"><span>Discount</span><span class="badge green">-${money(state.discountAmount || 0)}</span></div><div class="divider"></div><div class="row"><strong>To Pay</strong><strong>${money((data.grand_total || 0) - (state.discountAmount || 0))}</strong></div></section>
+        <section class="card card-pad"><button class="btn secondary full" id="coupon-toggle">🏷️ Apply Coupon ></button><div id="coupon-box" class="hidden row"><input id="coupon-code" class="input" placeholder="Coupon code"><button class="btn" id="apply-coupon">Apply</button></div></section>
+        <section class="card card-pad"><button class="btn secondary full" id="address-open">📍 Select delivery address ></button><p class="secondary-text">${state.selectedAddressId ? 'Address selected' : 'No address selected'}</p></section>
+        <section class="card card-pad"><h3>Payment method</h3>${['COD','UPI','CARD','WALLET'].map(p=>`<label class="row"><span>${p === 'COD' ? 'Cash on Delivery' : p}${p === 'WALLET' ? ' (Balance: Rs 500)' : ''}</span><input name="pay" type="radio" value="${p}" ${state.paymentMethod===p?'checked':''}></label>`).join('')}</section>
+        <button class="btn sticky-cta" id="place-order" ${state.selectedAddressId ? '' : 'disabled'}><span>🛒 ${data.item_count} items • ${money((data.grand_total || 0) - (state.discountAmount || 0))}</span><span>Place Order →</span></button>`;
+      document.querySelectorAll('[name="pay"]').forEach(r => r.onchange = () => state.paymentMethod = r.value);
+      document.getElementById('coupon-toggle').onclick = () => document.getElementById('coupon-box').classList.toggle('hidden');
+      document.getElementById('apply-coupon').onclick = applyCoupon;
+      document.getElementById('address-open').onclick = openAddressSheet;
+      document.getElementById('place-order').onclick = placeOrder;
+    }
+    async function cartSet(itemId, quantity) {
+      await jsonOrError(await apiFetch('/cart/update-quantity', { method: 'POST', body: JSON.stringify({ menu_item_id: itemId, quantity: Math.max(0, quantity) }) }));
+      renderCart();
+    }
+    async function applyCoupon() {
+      const code = document.getElementById('coupon-code').value.trim();
+      const amount = state.cart?.data?.grand_total || 0;
+      try {
+        const data = await jsonOrError(await apiFetch('/coupons/validate', { method: 'POST', body: JSON.stringify({ code, order_amount: amount }) }));
+        state.discountAmount = data.data?.discount_amount || data.discount_amount || 0;
+        state.couponCode = code;
+        showToast(`Saved ${money(state.discountAmount)}`);
+        renderCart();
+      } catch (err) { showToast(err.message || 'Coupon invalid', 'error'); }
+    }
+    async function openAddressSheet() {
+      try { state.addresses = await jsonOrError(await apiFetch('/addresses')); } catch { state.addresses = []; }
+      document.body.insertAdjacentHTML('beforeend', `<div class="sheet" id="address-sheet"><h2>Saved Addresses</h2>
+        <div>${state.addresses.map(a => `<button class="role-card" style="width:100%;text-align:left;place-items:start" data-address="${a.id}"><strong>${a.label}</strong><span>${a.full_address}</span></button>`).join('') || '<p class="secondary-text">No saved addresses</p>'}</div>
+        <h3>Add new address</h3><div class="grid"><select id="addr-label" class="select"><option>HOME</option><option>WORK</option><option>OTHER</option></select><input id="addr-landmark" class="input" placeholder="Landmark"></div><textarea id="addr-full" class="textarea" placeholder="Full address" style="margin-top:10px"></textarea>
+        <div class="row"><button class="btn secondary" onclick="document.getElementById('address-sheet').remove()">Close</button><button class="btn" id="addr-save">Save Address</button></div></div>`);
+      document.querySelectorAll('[data-address]').forEach(b => b.onclick = () => { state.selectedAddressId = b.dataset.address; document.getElementById('address-sheet').remove(); renderCart(); });
+      document.getElementById('addr-save').onclick = async () => {
+        const payload = { label: document.getElementById('addr-label').value, full_address: document.getElementById('addr-full').value, landmark: document.getElementById('addr-landmark').value };
+        const a = await jsonOrError(await apiFetch('/addresses', { method: 'POST', body: JSON.stringify(payload) }));
+        state.selectedAddressId = a.id;
+        document.getElementById('address-sheet').remove();
+        renderCart();
+      };
+    }
+    async function placeOrder() {
+      try {
+        const payload = { delivery_address_id: state.selectedAddressId, payment_method: state.paymentMethod, coupon_code: state.couponCode || undefined };
+        const order = await jsonOrError(await apiFetch('/orders/place', { method: 'POST', body: JSON.stringify(payload) }));
+        showOrderSuccess(order);
+      } catch (err) { showToast(err.message || 'Order failed', 'error'); }
+    }
+    function showOrderSuccess(order) {
+      document.body.insertAdjacentHTML('beforeend', `<div class="success-overlay" id="success"><div><div class="check">✓</div><h1>Order Placed! 🎉</h1><p>Order #${String(order.id).slice(0,6).toUpperCase()}</p><div class="steps">${['Placed','Confirmed','Preparing','On Way','Delivered'].map((s,i)=>`<span class="step ${i===0?'active':''}">${i===0?'●':'○'} ${s}</span>`).join('')}</div><p>Restaurant: ${order.restaurant?.name || 'BiteX99 Restaurant'}</p><p>Est. delivery: 35-40 mins</p><button class="btn" id="track">Track Order</button> <button class="btn secondary" id="home">Back to Home</button></div></div>`);
+      document.getElementById('track').onclick = () => { document.getElementById('success').remove(); state.activeTab = 'orders'; renderOrders(); };
+      document.getElementById('home').onclick = () => { document.getElementById('success').remove(); state.selectedRestaurant = null; state.activeTab = 'home'; renderHome(); };
+    }
+
+    async function renderOrders() {
+      customerShell(`<h2>My Orders</h2><div id="orders-box">${skeletons(3)}</div>`);
+      try {
+        const data = await jsonOrError(await apiFetch('/orders?page=1&limit=10'));
+        state.orders = data.data || [];
+        document.getElementById('orders-box').innerHTML = state.orders.map(orderCard).join('') || '<div class="empty">No orders yet</div>';
+        document.querySelectorAll('[data-rate]').forEach(b => b.onclick = () => openReviewSheet(b.dataset.rate));
+        document.querySelectorAll('[data-cancel]').forEach(b => b.onclick = () => cancelOrder(b.dataset.cancel));
+      } catch { document.getElementById('orders-box').innerHTML = '<div class="empty">Could not load orders</div>'; }
+    }
+    function orderBadge(s) {
+      const map = { PLACED:'blue', CONFIRMED:'blue', PREPARING:'amber', OUT_FOR_DELIVERY:'amber', DELIVERED:'green', CANCELLED:'red', FAILED:'gray' };
+      return `<span class="badge ${map[s] || 'gray'}">${s}</span>`;
+    }
+    function orderCard(o) {
+      const canCancel = ['PLACED','CONFIRMED'].includes(o.status);
+      return `<article class="card card-pad" style="margin-bottom:12px"><div class="row"><strong>🏪 ${o.restaurant_name || o.restaurant?.name || 'Restaurant'}</strong>${orderBadge(o.status)}</div><p class="secondary-text">${o.item_count || 'Items'} item(s)</p><div class="row"><strong>${money(o.total_amount)}</strong><span>${new Date(o.created_at).toLocaleString()}</span></div><div class="row"><button class="btn secondary">Reorder</button>${o.status === 'DELIVERED' ? `<button class="btn" data-rate="${o.id}">Rate Order</button>` : ''}${canCancel ? `<button class="btn secondary" data-cancel="${o.id}">Cancel</button>` : ''}</div></article>`;
+    }
+    async function cancelOrder(id) {
+      const reason = prompt('Cancellation reason');
+      if (!reason) return;
+      await jsonOrError(await apiFetch(`/orders/${id}/cancel`, { method: 'POST', body: JSON.stringify({ reason }) }));
+      showToast('Order cancelled');
+      renderOrders();
+    }
+    function openReviewSheet(orderId) {
+      document.body.insertAdjacentHTML('beforeend', `<div class="sheet" id="review"><h2>How was your experience?</h2><p>Food: <span class="stars" data-kind="food">★★★★★</span></p><p>Delivery: <span class="stars" data-kind="delivery">★★★★★</span></p><textarea id="review-comment" class="textarea" placeholder="Share your experience..."></textarea><div class="chips">${['Tasty food','Good packaging','Fast delivery','Generous portions','Good value'].map(t=>`<button class="chip">${t}</button>`).join('')}</div><button class="btn full" id="submit-review">Submit Review</button></div>`);
+      document.getElementById('submit-review').onclick = async () => {
+        await jsonOrError(await apiFetch('/reviews', { method: 'POST', body: JSON.stringify({ order_id: orderId, food_rating: 5, delivery_rating: 5, comment: document.getElementById('review-comment').value }) }));
+        document.getElementById('review').remove();
+        showToast('Review submitted');
+      };
+    }
+
+    async function renderProfile() {
+      const u = user();
+      customerShell(`<section class="card card-pad"><div class="avatar" style="width:80px;height:80px;font-size:32px">${initials()}</div><h2>${u.name || 'BiteX99 User'}</h2><p class="secondary-text">${u.phone || ''}</p><input id="profile-name" class="input" placeholder="Name" value="${u.name || ''}"><input id="profile-email" class="input" style="margin-top:10px" placeholder="Email" value="${u.email || ''}"><button class="btn full" id="save-profile">Save Profile</button></section><section class="card card-pad" style="margin-top:14px"><h3>Saved Addresses</h3><div id="profile-addresses">${skeletons(1)}</div><button class="btn secondary full" id="profile-add-address">+ Add Address</button></section><button class="btn secondary full" id="logout" style="margin-top:14px">Logout</button>`);
+      document.getElementById('save-profile').onclick = async () => {
+        const updated = await jsonOrError(await apiFetch('/users/me', { method: 'PATCH', body: JSON.stringify({ name: document.getElementById('profile-name').value, email: document.getElementById('profile-email').value }) }));
+        localStorage.setItem(USER_KEY, JSON.stringify(updated));
+        showToast('Profile saved');
+      };
+      document.getElementById('profile-add-address').onclick = openAddressSheet;
+      document.getElementById('logout').onclick = logout;
+      try {
+        state.addresses = await jsonOrError(await apiFetch('/addresses'));
+        document.getElementById('profile-addresses').innerHTML = state.addresses.map(a => `<div class="row"><span><strong>${a.label}</strong><br><span class="secondary-text">${a.full_address}</span></span><button class="btn ghost" onclick="deleteAddress('${a.id}')">Delete</button></div>`).join('') || '<p class="secondary-text">No addresses saved</p>';
+      } catch {}
+    }
+    async function deleteAddress(id) {
+      await apiFetch(`/addresses/${id}`, { method: 'DELETE' });
+      renderProfile();
+    }
+
+    function showPartnerKyc() {
+      app.innerHTML = `<section class="app-shell"><nav class="topbar">${logo()}<span></span><button class="btn secondary" onclick="logout()">Logout</button></nav><div class="content"><h1>Delivery KYC</h1><div id="kyc-box">${skeletons(2)}</div></div></section>`;
+      renderKycDocs('/partner/kyc/status', '/partner/kyc/upload', '/partner/kyc/submit', ['AADHAAR_FRONT','AADHAAR_BACK','PAN_CARD','DRIVING_LICENSE_FRONT','DRIVING_LICENSE_BACK','VEHICLE_RC','VEHICLE_INSURANCE','BANK_PASSBOOK','PROFILE_PHOTO'], 'kyc-box');
+    }
+    function showRestaurantDocs() {
+      app.innerHTML = `<section class="app-shell"><nav class="topbar">${logo()}<span></span><button class="btn secondary" onclick="logout()">Logout</button></nav><div class="content"><h1>Restaurant Documents</h1><div id="docs-box">${skeletons(2)}</div></div></section>`;
+      renderKycDocs('/restaurant/documents/status', '/restaurant/documents/upload', '/restaurant/documents/submit', ['FSSAI_LICENSE','PAN_CARD','BANK_CANCELLED_CHEQUE','OWNER_AADHAAR_FRONT','OWNER_AADHAAR_BACK','RESTAURANT_PHOTO_FRONT'], 'docs-box');
+    }
+    async function renderKycDocs(statusPath, uploadPath, submitPath, required, boxId) {
+      let data = {};
+      try { data = await jsonOrError(await apiFetch(statusPath)); } catch {}
+      const docs = data.documents || [];
+      const uploaded = required.filter(d => docs.some(x => x.doc_type === d && x.status !== 'REJECTED')).length;
+      document.getElementById(boxId).innerHTML = `<div class="card card-pad"><div class="progress"><span style="width:${uploaded/required.length*100}%"></span></div><p>${uploaded}/${required.length} required uploaded</p><div class="doc-list">${required.map(d => {
+        const doc = docs.find(x => x.doc_type === d);
+        const status = doc ? (doc.status === 'APPROVED' ? '✅ Approved' : '⏳ Pending review') : '❌ Not uploaded';
+        return `<div class="row"><span>${status} - ${d}</span>${doc ? '' : `<label class="btn secondary">Upload<input type="file" class="hidden" data-upload="${d}"></label>`}</div>`;
+      }).join('')}</div><button class="btn full" id="submit-docs" ${uploaded === required.length ? '' : 'disabled'}>Submit for Review</button><p class="secondary-text">Documents under review (2-7 days)</p></div>`;
+      document.querySelectorAll('[data-upload]').forEach(input => input.onchange = async () => {
+        const fd = new FormData();
+        fd.append('doc_type', input.dataset.upload);
+        fd.append('file', input.files[0]);
+        await fetch(`/api/v1${uploadPath}`, { method:'POST', headers: { Authorization: `Bearer ${getToken()}` }, body: fd });
+        renderKycDocs(statusPath, uploadPath, submitPath, required, boxId);
+      });
+      document.getElementById('submit-docs').onclick = async () => { await apiFetch(submitPath, { method:'POST', body:'{}' }); showToast('Submitted for review'); };
+    }
+
+    function partnerShell(inner) {
+      app.innerHTML = `<section class="app-shell"><nav class="topbar"><strong>FE ID: ${user().partner?.fe_id || 'ZFE00001'}</strong><button class="status-pill" id="duty-toggle">● OFFLINE</button><button class="btn secondary" onclick="logout()">Logout</button></nav><div class="content">${inner}</div><nav class="bottom-tabs">${tab('active','📦','Active',state.partnerTab)}${tab('earnings','💰','Earnings',state.partnerTab)}${tab('stats','📊','Stats',state.partnerTab)}${tab('profile','👤','Profile',state.partnerTab)}</nav></section>`;
+      document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { state.partnerTab = b.dataset.tab; showPartnerDashboard(); });
+      document.getElementById('duty-toggle').onclick = toggleDuty;
+    }
+    function showPartnerDashboard() {
+      if (state.partnerTab === 'earnings') return renderPartnerEarnings();
+      if (state.partnerTab === 'stats') return renderPartnerStats();
+      if (state.partnerTab === 'profile') return renderPartnerProfile();
+      renderPartnerActive();
+    }
+    async function toggleDuty() {
+      navigator.geolocation.getCurrentPosition(async pos => {
+        await jsonOrError(await apiFetch('/partner/duty/start', { method:'POST', body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }) }));
+        showToast('You are online');
+        connectPartnerSockets();
+      }, () => showToast('Enable location to go online', 'error'));
+    }
+    function connectPartnerSockets() {
+      const ws = new WebSocket(`ws://localhost:8000/api/v1/ws/partner/orders?token=${getToken()}`);
+      ws.onmessage = e => { const data = JSON.parse(e.data); if (data.event === 'NEW_ORDER') { state.incoming = data; renderPartnerActive(); } if (data.event === 'INCENTIVE_EARNED') showToast(data.message); };
+      const locWs = new WebSocket(`ws://localhost:8000/api/v1/ws/partner/location?token=${getToken()}`);
+      setInterval(() => navigator.geolocation.getCurrentPosition(pos => locWs.readyState === 1 && locWs.send(JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, speed_kmph: (pos.coords.speed || 0) * 3.6, heading_degrees: pos.coords.heading || 0 }))), 5000);
+    }
+    function renderPartnerActive() {
+      const incoming = state.incoming ? `<div class="card card-pad"><h2>🔔 New Delivery Request</h2><p>Burger Barn</p><p>Classic Burger x2, Coke x1</p><p>📍 2.3 km away</p><p>💰 Estimated: Rs 55</p><div class="progress"><span style="width:70%"></span></div><div class="row"><button class="btn secondary">✗ Reject</button><button class="btn">✓ Accept</button></div></div>` : `<div class="empty"><div><h1>🛵</h1><h2>You're online and ready!</h2><p>Waiting for orders...</p><div class="pulse" style="margin:auto"></div><p>Today: Rs 385 earned • 8 deliveries</p></div></div>`;
+      partnerShell(incoming);
+    }
+    async function renderPartnerEarnings() {
+      partnerShell(`<h2>Earnings</h2><div id="earn-box">${skeletons(2)}</div>`);
+      try {
+        const today = await jsonOrError(await apiFetch('/partner/earnings/today'));
+        document.getElementById('earn-box').innerHTML = `<section class="card card-pad"><h1>${money(today.total_earned)} earned</h1><p>${today.deliveries_completed} deliveries • ${today.shift_hours} hours online • ${money(today.avg_per_delivery)} avg</p><div class="row"><span>Base Pay</span><span>${money(today.breakdown.base_pay)}</span></div><div class="row"><span>Distance Pay</span><span>${money(today.breakdown.distance_pay)}</span></div><div class="row"><span>Surge Pay</span><span>${money(today.breakdown.surge_pay)}</span></div></section><section class="card card-pad"><h3>Daily 8 Orders Bonus</h3><div class="progress"><span style="width:62%"></span></div><p>5/8 • 3 more deliveries → earn Rs 100</p></section><section class="card card-pad"><h3>💰 Wallet Balance: Rs 1,250</h3><button class="btn">Withdraw Now</button></section>`;
+      } catch { document.getElementById('earn-box').innerHTML = '<div class="empty">Could not load earnings</div>'; }
+    }
+    async function renderPartnerStats() {
+      partnerShell(`<section class="card card-pad"><h2>ZFE00001 • GOLD</h2><p>★ 4.8 rating • 234 deliveries</p><div class="grid"><div>Acceptance Rate: 94.5%</div><div>Completion Rate: 97.2%</div><div>Avg Delivery: 28 min</div><div>On-time Rate: 91%</div></div><p>Total earnings: Rs 12,840</p><p>Total km: 1,240 km</p></section>`);
+    }
+    function renderPartnerProfile() {
+      partnerShell(`<section class="card card-pad"><h2>Partner Profile</h2><p>FE ID: ZFE00001</p><p>Vehicle type: BIKE</p><p>Vehicle number: KA01AB1234</p><button class="btn secondary">Edit</button></section>`);
+    }
+    function openMaps(lat, lng) { window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank'); }
+
+    function restaurantShell(inner) {
+      app.innerHTML = `<section class="app-shell"><nav class="topbar"><strong>${user().restaurant?.name || 'Restaurant'}</strong><button class="status-pill" id="open-toggle">● OPEN</button><button class="btn secondary" onclick="logout()">Logout</button></nav><div class="content">${inner}</div><nav class="bottom-tabs">${tab('orders','📦','Orders',state.restaurantTab)}${tab('menu','🍽️','Menu',state.restaurantTab)}${tab('analytics','📊','Analytics',state.restaurantTab)}${tab('payouts','₹','Payouts',state.restaurantTab)}${tab('profile','👤','Profile',state.restaurantTab)}</nav></section>`;
+      document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => { state.restaurantTab = b.dataset.tab; showRestaurantDashboard(); });
+      document.getElementById('open-toggle').onclick = async () => { await apiFetch('/restaurant/profile/open-toggle', { method:'POST', body: JSON.stringify({ is_open: false }) }); showToast('Availability updated'); };
+    }
+    function showRestaurantDashboard() {
+      if (state.restaurantTab === 'menu') return renderRestaurantMenu();
+      if (state.restaurantTab === 'analytics') return renderRestaurantAnalytics();
+      if (state.restaurantTab === 'payouts') return renderRestaurantPayouts();
+      if (state.restaurantTab === 'profile') return renderRestaurantProfile();
+      renderRestaurantOrders();
+    }
+    async function renderRestaurantOrders() {
+      restaurantShell(`<h2>Live Orders</h2><div id="live-orders" class="columns">${skeletons(4)}</div>`);
+      connectRestaurantSocket();
+      try {
+        const data = await jsonOrError(await apiFetch('/restaurant/orders/live'));
+        const groups = ['placed','confirmed','preparing','ready'];
+        document.getElementById('live-orders').innerHTML = groups.map(g => `<section class="card card-pad"><h3>${g.toUpperCase()}</h3>${(data[g] || []).map(restaurantOrderCard).join('') || '<p class="secondary-text">None</p>'}</section>`).join('');
+      } catch { document.getElementById('live-orders').innerHTML = '<div class="empty">Could not load live orders</div>'; }
+    }
+    function restaurantOrderCard(o) {
+      return `<div class="card card-pad" style="margin-bottom:10px"><strong>#${String(o.id).slice(0,6)}</strong><p>${money(o.total_amount)}</p><div class="row"><button class="btn secondary">✗ Reject</button><button class="btn">✓ Accept</button></div></div>`;
+    }
+    function connectRestaurantSocket() {
+      const ws = new WebSocket(`ws://localhost:8000/api/v1/ws/restaurant/orders?token=${getToken()}`);
+      ws.onmessage = e => { const data = JSON.parse(e.data); if (data.event === 'NEW_ORDER') { showToast('New restaurant order', 'info'); renderRestaurantOrders(); } };
+    }
+    async function renderRestaurantMenu() {
+      restaurantShell(`<div class="split"><aside class="card card-pad"><h3>Categories</h3><div id="rest-cats">${skeletons(1)}</div><button class="btn full">+ Add Category</button></aside><section class="card card-pad"><div class="row"><h3>Items</h3><button class="btn">+ Add Item</button></div><div id="rest-items">${skeletons(3)}</div><button class="btn secondary full">Bulk Mark Unavailable</button></section></div>`);
+      try {
+        const cats = await jsonOrError(await apiFetch('/restaurant/menu/categories'));
+        const items = await jsonOrError(await apiFetch('/restaurant/menu/items'));
+        document.getElementById('rest-cats').innerHTML = cats.map(c=>`<button class="chip">${c.name}</button>`).join('');
+        document.getElementById('rest-items').innerHTML = items.map(i=>`<div class="row"><span>🟢 ${i.name} <strong>${money(i.price)}</strong></span><span>Available <input type="checkbox" ${i.is_available?'checked':''} onchange="toggleRestaurantItem('${i.id}', this.checked)"></span></div>`).join('');
+      } catch {}
+    }
+    async function toggleRestaurantItem(id, isAvailable) {
+      await apiFetch(`/restaurant/menu/items/${id}/toggle`, { method:'PATCH', body: JSON.stringify({ is_available: isAvailable }) });
+      showToast('Menu updated');
+    }
+    async function renderRestaurantAnalytics() {
+      restaurantShell(`<h2>Analytics</h2><div id="analytics">${skeletons(3)}</div>`);
+      try {
+        const overview = await jsonOrError(await apiFetch('/restaurant/analytics/overview'));
+        const top = await jsonOrError(await apiFetch('/restaurant/analytics/top-items'));
+        document.getElementById('analytics').innerHTML = `<section class="card card-pad"><div class="grid"><strong>📦 ${overview.today?.orders || 0} orders</strong><strong>${money(overview.today?.revenue)}</strong><strong>${money(overview.today?.avg_order_value)} avg</strong><strong>❌ ${overview.today?.cancelled || 0} cancelled</strong></div></section><section class="card card-pad"><h3>Revenue chart</h3>${['Mon','Tue','Wed','Thu','Fri'].map((d,i)=>`<div class="row"><span>${d} |${'█'.repeat(8-i)}|</span><span>${money(1200-i*120)}</span></div>`).join('')}</section><section class="card card-pad"><h3>Top items</h3>${(top || []).slice(0,5).map((i,n)=>`<div class="row"><span>${n+1} | ${i.name}</span><span>${i.order_count} • ${money(i.revenue)}</span></div>`).join('')}</section>`;
+      } catch { document.getElementById('analytics').innerHTML = '<div class="empty">Could not load analytics</div>'; }
+    }
+    async function renderRestaurantPayouts() {
+      restaurantShell(`<section class="card card-pad"><h2>💰 Wallet Balance: Rs 45,600</h2><p>Commission (20%): Rs 9,120</p><p>Net Receivable: Rs 36,480</p><p>Next Payout: Mon, 4 May</p><button class="btn">Request Payout Now</button></section><section class="card card-pad"><h3>Payout history</h3><div id="payouts">${skeletons(2)}</div></section>`);
+      try { const p = await jsonOrError(await apiFetch('/restaurant/payouts')); document.getElementById('payouts').innerHTML = (p.data || p || []).map(x=>`<div class="row"><span>${x.period_start || 'Period'}</span><span>${money(x.net_payout || x.amount)} ${x.status}</span></div>`).join(''); } catch {}
+    }
+    async function renderRestaurantProfile() {
+      restaurantShell(`<section class="card card-pad"><h2>Restaurant info</h2><input class="input" placeholder="Name"><input class="input" style="margin-top:10px" placeholder="Cuisine"><button class="btn full">Save Profile</button></section><section class="card card-pad"><h3>Weekly timings</h3><p>Mon-Sun: 10:00 - 23:00</p><button class="btn secondary">Edit</button></section><section class="card card-pad"><h3>Offers</h3><button class="btn">+ Create Offer</button></section><section class="card card-pad"><h3>Recent Reviews</h3><button class="btn secondary">Respond</button></section>`);
+    }
+
+    if (getToken()) routeAfterLogin();
+    else showLoginScreen();
+  </script>
+</body>
+</html>

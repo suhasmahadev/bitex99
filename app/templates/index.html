@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BitEx Auth — Test Console</title>
+  <meta name="description" content="Minimal test console for BitEx authentication APIs: OTP login and Google OAuth." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Design tokens ───────────────────────────────────────────────────── */
+    :root {
+      --bg:           #0a0e1a;
+      --surface:      #111827;
+      --surface-2:    #1a2235;
+      --border:       #1f2d47;
+      --accent:       #6366f1;
+      --accent-glow:  rgba(99,102,241,.35);
+      --accent-hover: #818cf8;
+      --success:      #10b981;
+      --error:        #ef4444;
+      --warning:      #f59e0b;
+      --text:         #e2e8f0;
+      --text-muted:   #64748b;
+      --text-dim:     #94a3b8;
+      --radius:       14px;
+      --radius-sm:    8px;
+      --mono:         'JetBrains Mono', monospace;
+    }
+
+    /* ── Reset ───────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 80px;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99,102,241,.15), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(16,185,129,.08), transparent);
+    }
+
+    /* ── Header ──────────────────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    h1 { font-size: 2rem; font-weight: 700; letter-spacing: -.5px; }
+    h1 span { color: var(--accent); }
+    .tagline { color: var(--text-muted); font-size: .9rem; margin-top: 6px; }
+
+    /* ── Layout ──────────────────────────────────────────────────────────── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    /* ── Card ────────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: box-shadow .25s ease;
+    }
+    .card:hover { box-shadow: 0 0 0 1px var(--accent), 0 8px 32px rgba(0,0,0,.4); }
+    .card-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 24px;
+    }
+    .card-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .card-icon.purple { background: rgba(99,102,241,.15); }
+    .card-icon.green  { background: rgba(16,185,129,.15); }
+    .card-icon.blue   { background: rgba(59,130,246,.15); }
+    .card-title { font-size: 1rem; font-weight: 600; }
+    .card-subtitle { font-size: .78rem; color: var(--text-muted); }
+
+    /* ── Form elements ───────────────────────────────────────────────────── */
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: .8rem; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; }
+
+    input[type="text"], input[type="tel"] {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: .9rem;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    input::placeholder { color: var(--text-muted); }
+
+    /* ── Buttons ─────────────────────────────────────────────────────────── */
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .2s, opacity .2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn:hover  { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(99,102,241,.4);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 20px rgba(99,102,241,.6); }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--success), #059669);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(16,185,129,.35);
+    }
+    .btn-success:hover { box-shadow: 0 6px 20px rgba(16,185,129,.5); }
+
+    .btn-google {
+      background: #fff;
+      color: #1f2937;
+      box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    }
+    .btn-google:hover { box-shadow: 0 6px 20px rgba(255,255,255,.2); }
+    .btn-google svg { flex-shrink: 0; }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-group { display: flex; flex-direction: column; gap: 10px; }
+
+    /* ── Response panel ───────────────────────────────────────────────────── */
+    .response-box {
+      margin-top: 18px;
+      background: #0d1117;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      display: none;
+    }
+    .response-box.visible { display: block; }
+    .response-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 14px;
+      background: var(--surface-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .response-label {
+      font-size: .72rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .08em; color: var(--text-muted);
+    }
+    .status-badge {
+      font-size: .72rem; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; font-family: var(--mono);
+    }
+    .status-ok    { background: rgba(16,185,129,.15); color: var(--success); }
+    .status-err   { background: rgba(239,68,68,.15);  color: var(--error); }
+    .status-info  { background: rgba(99,102,241,.15); color: var(--accent-hover); }
+
+    pre {
+      padding: 14px;
+      font-family: var(--mono);
+      font-size: .78rem;
+      line-height: 1.6;
+      overflow-x: auto;
+      color: var(--text-dim);
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ── Token status bar ────────────────────────────────────────────────── */
+    .token-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 24px;
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    }
+    .token-indicator {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--text-muted);
+      transition: background .3s;
+      flex-shrink: 0;
+    }
+    .token-indicator.active { background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .token-label { font-size: .85rem; color: var(--text-dim); }
+    .token-value { font-family: var(--mono); font-size: .72rem; color: var(--accent-hover);
+                   word-break: break-all; flex: 1; min-width: 0; }
+    .token-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .btn-sm {
+      padding: 5px 12px; font-size: .75rem; border-radius: 6px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-dim); cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Divider ─────────────────────────────────────────────────────────── */
+    .divider {
+      display: flex; align-items: center; gap: 10px; margin: 16px 0;
+      color: var(--text-muted); font-size: .78rem;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── Spinner ─────────────────────────────────────────────────────────── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ───────────────────────────────────────────────────────────── */
+    #toast-container {
+      position: fixed; bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 10px; z-index: 1000;
+    }
+    .toast {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      font-size: .85rem;
+      max-width: 320px;
+      animation: slideIn .3s ease;
+      display: flex; align-items: center; gap: 10px;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to   { transform: translateX(0);   opacity: 1; }
+    }
+    .toast.success { border-color: var(--success); }
+    .toast.error   { border-color: var(--error); }
+
+    /* ── Footer ──────────────────────────────────────────────────────────── */
+    footer {
+      margin-top: 60px; text-align: center;
+      color: var(--text-muted); font-size: .8rem;
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔐</div>
+    <h1>Bit<span>Ex</span> Auth</h1>
+  </div>
+  <p class="tagline">Production-grade authentication test console</p>
+</header>
+
+<!-- ── Token Status Bar ─────────────────────────────────────────────────────── -->
+<div class="token-bar" id="token-bar">
+  <div class="token-indicator" id="token-indicator"></div>
+  <div>
+    <div class="token-label">Access Token</div>
+    <div class="token-value" id="token-display">No token — complete login to get one</div>
+  </div>
+  <div class="token-actions">
+    <button class="btn-sm" onclick="copyToken()" title="Copy token">Copy</button>
+    <button class="btn-sm" onclick="clearToken()" title="Clear token">Clear</button>
+  </div>
+</div>
+
+<!-- ── Cards ────────────────────────────────────────────────────────────────── -->
+<div class="grid">
+
+  <!-- OTP Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon purple">📱</div>
+      <div>
+        <div class="card-title">Mobile OTP Login</div>
+        <div class="card-subtitle">Send & verify a 6-digit one-time password</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="otp-phone">Phone Number (E.164)</label>
+      <input id="otp-phone" type="tel" placeholder="+919876543210" autocomplete="tel" />
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary" id="btn-send-otp" onclick="sendOTP()">
+        <span class="spinner" id="spinner-send"></span>
+        <span>Send OTP</span>
+      </button>
+    </div>
+
+    <div class="divider">enter OTP received</div>
+
+    <div class="field">
+      <label for="otp-code">6-Digit OTP</label>
+      <input id="otp-code" type="text" placeholder="123456" maxlength="6" inputmode="numeric" />
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-success" id="btn-verify-otp" onclick="verifyOTP()">
+        <span class="spinner" id="spinner-verify"></span>
+        <span>Verify OTP &amp; Login</span>
+      </button>
+    </div>
+
+    <div class="response-box" id="otp-response">
+      <div class="response-header">
+        <span class="response-label">Response</span>
+        <span class="status-badge" id="otp-status-badge"></span>
+      </div>
+      <pre id="otp-response-body"></pre>
+    </div>
+  </div>
+
+  <!-- Google OAuth + Token Refresh Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon blue">☁️</div>
+      <div>
+        <div class="card-title">Google OAuth 2.0</div>
+        <div class="card-subtitle">Sign in with your Google account</div>
+      </div>
+    </div>
+
+    <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:18px;line-height:1.6;">
+      Clicking below will redirect you to Google's consent screen. After approval,
+      you'll be redirected back here with JWT tokens.
+    </p>
+
+    <button class="btn btn-google" onclick="googleLogin()">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+        <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+        <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+        <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="divider">token management</div>
+
+    <div class="card-header" style="margin-bottom:12px">
+      <div class="card-icon green">🔄</div>
+      <div>
+        <div class="card-title">Refresh Tokens</div>
+        <div class="card-subtitle">Exchange refresh token for new pair</div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-outline" id="btn-refresh" onclick="refreshToken()">
+        <span class="spinner" id="spinner-refresh"></span>
+        <span>Refresh Access Token</span>
+      </button>
+    </div>
+
+    <div class="response-box" id="google-response">
+      <div class="response-header">
+        <span class="response-label">Response</span>
+        <span class="status-badge" id="google-status-badge"></span>
+      </div>
+      <pre id="google-response-body"></pre>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Toast container ───────────────────────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<footer>
+  <p>
+    BitEx Auth Console &nbsp;·&nbsp;
+    <a href="/docs" target="_blank">Swagger UI</a> &nbsp;·&nbsp;
+    <a href="/redoc" target="_blank">ReDoc</a>
+  </p>
+</footer>
+
+<script>
+  /* ── Helpers ────────────────────────────────────────────────────────────── */
+  const BASE = '';   // same origin
+
+  function toast(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span>${type === 'success' ? '✅' : '❌'}</span> ${msg}`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+
+  function setLoading(spinnerId, btnId, isLoading) {
+    const spinner = document.getElementById(spinnerId);
+    const btn     = document.getElementById(btnId);
+    spinner.style.display = isLoading ? 'block' : 'none';
+    btn.disabled = isLoading;
+  }
+
+  function showResponse(boxId, badgeId, preId, status, data) {
+    const box    = document.getElementById(boxId);
+    const badge  = document.getElementById(badgeId);
+    const pre    = document.getElementById(preId);
+    const ok     = status >= 200 && status < 300;
+    box.classList.add('visible');
+    badge.textContent = `${status} ${ok ? 'OK' : 'ERROR'}`;
+    badge.className   = `status-badge ${ok ? 'status-ok' : 'status-err'}`;
+    pre.textContent   = JSON.stringify(data, null, 2);
+  }
+
+  /* ── Token store ────────────────────────────────────────────────────────── */
+  function saveTokens(data) {
+    if (data.access_token)  localStorage.setItem('access_token',  data.access_token);
+    if (data.refresh_token) localStorage.setItem('refresh_token', data.refresh_token);
+    if (data.role)          localStorage.setItem('role',           data.role);
+    updateTokenBar();
+  }
+
+  function updateTokenBar() {
+    const token = localStorage.getItem('access_token');
+    const indicator = document.getElementById('token-indicator');
+    const display   = document.getElementById('token-display');
+    if (token) {
+      indicator.classList.add('active');
+      display.textContent = token.slice(0, 60) + '…';
+    } else {
+      indicator.classList.remove('active');
+      display.textContent = 'No token — complete login to get one';
+    }
+  }
+
+  function copyToken() {
+    const token = localStorage.getItem('access_token');
+    if (!token) { toast('No token to copy', 'error'); return; }
+    navigator.clipboard.writeText(token).then(() => toast('Token copied!'));
+  }
+
+  function clearToken() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('role');
+    updateTokenBar();
+    toast('Tokens cleared');
+  }
+
+  /* ── OTP Flow ────────────────────────────────────────────────────────────── */
+  async function sendOTP() {
+    const phone = document.getElementById('otp-phone').value.trim();
+    if (!phone) { toast('Enter a phone number', 'error'); return; }
+
+    setLoading('spinner-send', 'btn-send-otp', true);
+    try {
+      const res  = await fetch(`${BASE}/auth/send-otp`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ phone }),
+      });
+      const data = await res.json();
+      showResponse('otp-response', 'otp-status-badge', 'otp-response-body', res.status, data);
+      if (res.ok) {
+        toast('OTP sent! Check the server console for the code.');
+        document.getElementById('otp-code').focus();
+      } else {
+        toast(data.detail || 'Failed to send OTP', 'error');
+      }
+    } catch (err) {
+      toast('Network error: ' + err.message, 'error');
+    } finally {
+      setLoading('spinner-send', 'btn-send-otp', false);
+    }
+  }
+
+  async function verifyOTP() {
+    const phone = document.getElementById('otp-phone').value.trim();
+    const otp   = document.getElementById('otp-code').value.trim();
+    if (!phone || !otp) { toast('Enter phone and OTP', 'error'); return; }
+
+    setLoading('spinner-verify', 'btn-verify-otp', true);
+    try {
+      const res  = await fetch(`${BASE}/auth/verify-otp`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ phone, otp }),
+      });
+      const data = await res.json();
+      showResponse('otp-response', 'otp-status-badge', 'otp-response-body', res.status, data);
+      if (res.ok) {
+        saveTokens(data);
+        toast(`Logged in as ${data.role} 🎉`);
+      } else {
+        toast(data.detail || 'OTP verification failed', 'error');
+      }
+    } catch (err) {
+      toast('Network error: ' + err.message, 'error');
+    } finally {
+      setLoading('spinner-verify', 'btn-verify-otp', false);
+    }
+  }
+
+  /* ── Google OAuth ────────────────────────────────────────────────────────── */
+  function googleLogin() {
+    window.location.href = `${BASE}/auth/google/login`;
+  }
+
+  /* ── Token Refresh ───────────────────────────────────────────────────────── */
+  async function refreshToken() {
+    const refresh_token = localStorage.getItem('refresh_token');
+    if (!refresh_token) { toast('No refresh token stored', 'error'); return; }
+
+    setLoading('spinner-refresh', 'btn-refresh', true);
+    try {
+      const res  = await fetch(`${BASE}/auth/refresh`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ refresh_token }),
+      });
+      const data = await res.json();
+      showResponse('google-response', 'google-status-badge', 'google-response-body', res.status, data);
+      if (res.ok) {
+        saveTokens(data);
+        toast('Tokens refreshed successfully!');
+      } else {
+        toast(data.detail || 'Refresh failed', 'error');
+      }
+    } catch (err) {
+      toast('Network error: ' + err.message, 'error');
+    } finally {
+      setLoading('spinner-refresh', 'btn-refresh', false);
+    }
+  }
+
+  /* ── Google callback result (URL hash/query on redirect) ─────────────────── */
+  (function checkGoogleCallback() {
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get('access_token');
+    if (accessToken) {
+      // In case the backend redirects back here with tokens in query params
+      saveTokens({
+        access_token:  accessToken,
+        refresh_token: params.get('refresh_token') || '',
+        role:          params.get('role') || '',
+      });
+      toast('Google login successful 🎉');
+      window.history.replaceState({}, '', '/');
+    }
+  })();
+
+  /* ── Init ─────────────────────────────────────────────────────────────────── */
+  updateTokenBar();
+
+  /* Enter key shortcuts */
+  document.getElementById('otp-phone').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendOTP();
+  });
+  document.getElementById('otp-code').addEventListener('keydown', e => {
+    if (e.key === 'Enter') verifyOTP();
+  });
+</script>
+</body>
+</html>

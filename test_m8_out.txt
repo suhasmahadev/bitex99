@@ -1,0 +1,83 @@
+﻿
+Set order 1cc1acfb-8425-459f-bda8-55129eaa0a89 -> DELIVERED
+Restaurant: 894cbe3a-97da-4d52-81d0-2bf2d262879a
+Restaurant rating BEFORE: 4.20, total_reviews: 96
+
+============================================================
+TEST 1 - Review a delivered order
+Status: 409
+{
+  "success": false,
+  "message": "You have already reviewed this order",
+  "error_code": "REVIEW_ALREADY_EXISTS"
+}
+============================================================
+  Restaurant rating AFTER:  4.20, total_reviews: 96
+
+============================================================
+TEST 2 - Review same order again (expect 409 REVIEW_ALREADY_EXISTS)
+Status: 409
+{
+  "success": false,
+  "message": "You have already reviewed this order",
+  "error_code": "REVIEW_ALREADY_EXISTS"
+}
+============================================================
+
+============================================================
+TEST 3 - Review non-delivered order (expect 409 ORDER_NOT_DELIVERED)
+Status: 409
+{
+  "success": false,
+  "error_code": "ORDER_NOT_DELIVERED",
+  "message": "You can only review delivered orders"
+}
+============================================================
+
+============================================================
+TEST 4 - Validate FLAT100 coupon (expect discount=100, final=400)
+Status: 200
+{
+  "success": true,
+  "data": {
+    "is_valid": true,
+    "coupon_code": "FLAT100",
+    "discount_type": "FLAT",
+    "discount_amount": 100.0,
+    "final_amount": 400.0,
+    "message": "You save \u20b9100 with this coupon"
+  }
+}
+============================================================
+
+============================================================
+TEST 5 - Rate limit: 6 rapid send-otp requests (different phones, same IP)
+(first 5 must succeed; 6th must be 429 RATE_LIMIT_EXCEEDED)
+  Request 1 (+919999800001): Status 200: OTP sent
+  Request 2 (+919999800002): Status 200: OTP sent
+  Request 3 (+919999800003): Status 200: OTP sent
+  Request 4 (+919999800004): Status 200: OTP sent
+  Request 5 (+919999800005): Status 200: OTP sent
+  Request 6 (+919999800006): Status 429 <- RATE LIMIT HIT (IP rate limiter)
+  Body: {'success': False, 'error_code': 'RATE_LIMIT_EXCEEDED', 'message': 'Too many requests. Try again in 115 seconds', 'retry_after': 115}
+  Retry-After: 115
+  X-Request-ID: 9a599776-2562-49a0-9498-567ebc9f65b7
+============================================================
+
+============================================================
+TEST 6 - X-Request-ID on every response
+  Request 1 X-Request-ID: bf0c5e71-a395-4860-ad76-edb7be9c3c6d
+  Request 2 X-Request-ID: 592f5573-5a6d-44c8-9cd9-c1cce8731951
+  Are they different? YES
+============================================================
+
+============================================================
+TEST 7 - Security headers on /api/v1/restaurants
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-Request-ID: e58d5600-cde5-47e4-8244-8f42bcf3d31d
+  Status: 200
+============================================================
+
+
+All 7 tests complete.
